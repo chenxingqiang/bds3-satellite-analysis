@@ -314,25 +314,32 @@ class ModelEvaluator:
             # Generate SRP parameters for sampled points
             srp_params = []
             
+            # Create sequences for batch processing
+            batch_sequences = []
             for idx in sample_indices:
-                # Create sequence (use 1 timestep for parameter extraction)
-                seq = np.column_stack([
-                    [time_feature[idx]],
-                    [sat_data['sun_elevations'][idx]],
-                    [sat_data['orbit_angles'][idx]],
-                    sat_type_onehot
-                ])
-                
-                # Expand dimensions for batch processing
-                seq = np.expand_dims(seq, axis=0)
-                
-                # Make prediction
-                srp_output = self.model.srp_model(seq)
-                
-                # Extract parameters
-                d_params, y_params, b_params = [p.numpy()[0] for p in srp_output]
-                
-                # Store parameters
+                # Create sequence with proper shape [time_steps, features]
+                seq = np.array([[
+                    time_feature[idx],
+                    sat_data['sun_elevations'][idx],
+                    sat_data['orbit_angles'][idx],
+                    sat_type_onehot[0],  # CAST indicator
+                    sat_type_onehot[1]   # SECM indicator
+                ]])  # Shape: [1, 5]
+                batch_sequences.append(seq)
+            
+            # Stack all sequences into a batch
+            batch_sequences = np.array(batch_sequences)  # Shape: [batch_size, 1, 5]
+            
+            # Make batch prediction
+            srp_output = self.model.srp_model(batch_sequences)
+            
+            # Extract parameters for all samples
+            d_params_batch, y_params_batch, b_params_batch = srp_output
+            
+            # Store parameters for each sample
+            for i in range(len(sample_indices)):
+                d_params = d_params_batch.numpy()[i]
+                y_params = y_params_batch.numpy()[i]
                 srp_params.append(np.concatenate([d_params, y_params]))
             
             # Convert to numpy array
