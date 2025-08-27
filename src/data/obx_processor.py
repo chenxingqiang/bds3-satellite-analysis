@@ -416,11 +416,39 @@ class OBXProcessor:
                     np.random.shuffle(self.indices)
         
         # Combine data from all satellites
-        yaw_features_combined = np.vstack([features['yaw'][key] for key in features['yaw']])
-        yaw_targets_combined = np.hstack([targets['yaw'][key] for key in targets['yaw']])
+        yaw_features_list = []
+        yaw_targets_list = []
+        srp_features_list = []
+        srp_targets_list = []
         
-        srp_features_combined = np.vstack([features['srp'][key] for key in features['srp']])
-        srp_targets_combined = np.hstack([targets['srp'][key] for key in targets['srp']])
+        # Create sequences for time series input
+        seq_length = 60  # 30 minutes with 30-second data
+        
+        for key in features['yaw']:
+            yaw_data = features['yaw'][key]
+            yaw_target = targets['yaw'][key]
+            
+            # Create sequences
+            for i in range(len(yaw_data) - seq_length + 1):
+                if i % 10 == 0:  # Sample every 10th sequence to reduce data size
+                    yaw_features_list.append(yaw_data[i:i+seq_length])
+                    yaw_targets_list.append(yaw_target[i+seq_length-1])
+        
+        for key in features['srp']:
+            srp_data = features['srp'][key]
+            srp_target = targets['srp'][key]
+            
+            # Create sequences
+            for i in range(len(srp_data) - seq_length + 1):
+                if i % 10 == 0:  # Sample every 10th sequence to reduce data size
+                    srp_features_list.append(srp_data[i:i+seq_length])
+                    srp_targets_list.append(srp_target[i+seq_length-1])
+        
+        yaw_features_combined = np.array(yaw_features_list)
+        yaw_targets_combined = np.array(yaw_targets_list)
+        
+        srp_features_combined = np.array(srp_features_list)
+        srp_targets_combined = np.array(srp_targets_list)
         
         # Split into train and validation sets
         n_yaw = len(yaw_features_combined)

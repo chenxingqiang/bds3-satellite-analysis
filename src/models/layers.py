@@ -42,7 +42,6 @@ class EclipseAttention(tf.keras.layers.Layer):
         if beta is not None:
             # Create eclipse mask: True where |beta| < 12.9°
             eclipse_mask = tf.abs(beta) < 12.9
-            eclipse_mask = tf.cast(eclipse_mask, tf.float32)
             
             # Enhance attention weights for eclipse periods (multiply by 3.0)
             eclipse_factor = tf.where(eclipse_mask, 3.0, 1.0)

@@ -62,33 +62,19 @@ class SRPCompensationModel(tf.keras.Model):
             tf.keras.layers.Dense(2)  # B0, Bs
         ])
     
-    def build_adjacency(self, sat_types):
+    def build_adjacency(self, batch_size):
         """
-        Build adjacency matrix based on satellite types
+        Build adjacency matrix for batch processing
         
         Args:
-            sat_types: One-hot encoded satellite types
+            batch_size: Size of the batch
             
         Returns:
             Adjacency matrix
         """
-        # Extract CAST/SECM indicators
-        is_cast = sat_types[:, 0]  # First element is CAST indicator
-        
-        # Build adjacency matrix with higher weights between same types
-        n = len(is_cast)
-        adj = np.zeros((n, n))
-        
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    adj[i, j] = 1.0  # Self-connection
-                elif (is_cast[i] == 1 and is_cast[j] == 1) or (is_cast[i] == 0 and is_cast[j] == 0):
-                    adj[i, j] = 0.8  # Same type connection
-                else:
-                    adj[i, j] = 0.3  # Different type connection
-        
-        return tf.convert_to_tensor(adj, dtype=tf.float32)
+        # Create simple identity matrix for batch processing
+        adj = tf.eye(batch_size)
+        return adj
     
     def call(self, inputs):
         """
@@ -101,21 +87,18 @@ class SRPCompensationModel(tf.keras.Model):
         Returns:
             SRP parameters for D, Y, B directions
         """
-        # Extract satellite type
-        sat_types = inputs[:, 0, 3:5]  # First timestep, last 2 features (one-hot encoded)
-        
         # Process input features
         x = self.input_dense(inputs)
         
         # Apply multi-frequency convolution for periodic patterns
         x = self.multi_freq_conv(x)
         
-        # Flatten for GCN
+        # Flatten for processing
         batch_size = tf.shape(x)[0]
         features = tf.reshape(x, [batch_size, -1])
         
         # Build adjacency matrix
-        adj = self.build_adjacency(sat_types)
+        adj = self.build_adjacency(batch_size)
         
         # Apply graph convolution
         gcn_output = self.gcn([features, adj])
