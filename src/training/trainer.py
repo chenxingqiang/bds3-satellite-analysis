@@ -216,7 +216,7 @@ class ModelTrainer:
 
             # Save model checkpoint
             self.model.save_weights(
-                os.path.join(self.checkpoint_path, f'model_epoch_{epoch+1:02d}.h5')
+                os.path.join(self.checkpoint_path, f'model_epoch_{epoch+1:02d}.weights.h5')
             )
 
             # Check for early stopping
@@ -225,16 +225,17 @@ class ModelTrainer:
                 break
 
         return history
-
+    
     def save_model(self, path: str):
         """
         Save the trained model
-
+        
         Args:
             path: Path to save the model
         """
-        self.model.save(path)
-        print(f"Model saved to {path}")
+        model_path = path + '.keras' if not path.endswith('.keras') else path
+        self.model.save(model_path)
+        print(f"Model saved to {model_path}")
 
     def load_weights(self, checkpoint_path: str):
         """
