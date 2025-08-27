@@ -161,9 +161,9 @@ class CombinedModel(tf.keras.Model):
         """Get config for serialization"""
         config = super(CombinedModel, self).get_config()
         config.update({
-            'yaw_lstm_units': self.yaw_model.lstm1.units,
-            'yaw_attention_units': self.yaw_model.attention.attention_dense.units,
-            'srp_gcn_filters': self.srp_model.gcn.channels,
-            'srp_gcn_kernel': self.srp_model.gcn.kernel_size
+            'yaw_lstm_units': 128,
+            'yaw_attention_units': 64,
+            'srp_gcn_filters': 64,
+            'srp_gcn_kernel': 3
         })
         return config
