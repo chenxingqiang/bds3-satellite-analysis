@@ -79,7 +79,7 @@ class ModelEvaluator:
         batch_inputs = {
             'yaw': sequences[indices],
             'srp': np.concatenate([
-                np.expand_dims(sequences[indices][:, :, :3], axis=-1),  # time, beta, mu
+                sequences[indices][:, :, :3],  # time, beta, mu
                 np.tile(sat_type_onehot, (batch_size, seq_length, 1))   # satellite type
             ], axis=-1)
         }
@@ -200,7 +200,7 @@ class ModelEvaluator:
             
             # Create SRP branch inputs
             srp_input = np.concatenate([
-                np.expand_dims(batch_sequences[:, :, :3], axis=-1),  # time, beta, mu
+                batch_sequences[:, :, :3],  # time, beta, mu
                 np.tile(sat_type_onehot, (len(batch_sequences), seq_length, 1))  # sat type
             ], axis=-1)
             
