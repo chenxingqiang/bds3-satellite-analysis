@@ -4,8 +4,22 @@ Solar Radiation Pressure (SRP) Compensation Model using Graph Convolution
 
 import tensorflow as tf
 import numpy as np
-from spektral.layers import GCNConv
 from src.models.layers import MultiFrequencyConv
+
+class SimpleGraphConv(tf.keras.layers.Layer):
+    """Simplified graph convolution layer without spektral dependency"""
+    
+    def __init__(self, filters, activation='relu'):
+        super(SimpleGraphConv, self).__init__()
+        self.filters = filters
+        self.dense = tf.keras.layers.Dense(filters, activation=activation)
+        
+    def call(self, inputs):
+        features, adjacency = inputs
+        # Simple message passing: multiply features by adjacency and apply dense layer
+        aggregated = tf.matmul(adjacency, features)
+        output = self.dense(aggregated)
+        return output
 
 class SRPCompensationModel(tf.keras.Model):
     """Graph convolution model for SRP compensation"""
@@ -27,7 +41,7 @@ class SRPCompensationModel(tf.keras.Model):
         self.multi_freq_conv = MultiFrequencyConv(frequencies=[1, 2, 4])  # Following ECOMC model
         
         # Graph convolution layer for satellite relationship modeling
-        self.gcn = GCNConv(gcn_filters, activation='relu')
+        self.gcn = SimpleGraphConv(gcn_filters, activation='relu')
         
         # Output layers for D, Y, B components
         self.d_output = tf.keras.Sequential([
