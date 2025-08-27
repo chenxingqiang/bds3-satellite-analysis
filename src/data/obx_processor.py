@@ -338,24 +338,24 @@ class OBXProcessor:
                 min_timestamp = np.min(timestamps)
                 normalized_time = (timestamps - min_timestamp) / (24 * 3600)  # days
                 
+                # One-hot encode satellite type
+                sat_type_onehot = np.array([1, 0]) if sat_data['sat_type'] == 'CAST' else np.array([0, 1])
+                sat_type_onehot_repeated = np.tile(sat_type_onehot, (len(normalized_time), 1))
+                
                 # Create yaw branch features
-                # [time, beta, mu, nominal_yaw]
+                # [time, beta, mu, sat_type_cast, sat_type_secm]
                 yaw_features = np.column_stack([
                     normalized_time,
                     sat_data['sun_elevations'],
                     sat_data['orbit_angles'],
-                    sat_data['nominal_yaws']
+                    sat_type_onehot_repeated
                 ])
                 
                 # Yaw branch target: actual yaw angle
                 yaw_target = sat_data['yaw_angles']
                 
                 # SRP branch features
-                # [time, beta, mu, sat_type_onehot]
-                # One-hot encode satellite type
-                sat_type_onehot = np.array([1, 0]) if sat_data['sat_type'] == 'CAST' else np.array([0, 1])
-                sat_type_onehot_repeated = np.tile(sat_type_onehot, (len(normalized_time), 1))
-                
+                # [time, beta, mu, sat_type_cast, sat_type_secm] (same as yaw features)
                 srp_features = np.column_stack([
                     normalized_time,
                     sat_data['sun_elevations'],
